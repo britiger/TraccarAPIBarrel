@@ -1,6 +1,7 @@
 using Toybox.Application;
 using Toybox.System;
 using Toybox.Position;
+using Toybox.Activity;
 using Toybox.Time;
 using Toybox.Communications;
 using Toybox.Math;
@@ -82,6 +83,30 @@ module TraccarAPIBarrel {
         // Battery
         var stats = System.getSystemStats();
         url = url + "&batt=" + stats.battery;
+
+        // Activity
+        var activity = Activity.getActivityInfo();
+        if (activity != null) {
+            var avgSpeedKm = activity.averageSpeed; if (avgSpeedKm != null) { avgSpeedKm = avgSpeedKm*3.6; }
+            var destDistKm = activity.distanceToDestination; if (destDistKm != null) { destDistKm = destDistKm/1000; }
+            var estDistKm = activity.elapsedDistance; if (estDistKm != null) { estDistKm = estDistKm/1000; }
+
+            if (avgSpeedKm != null && destDistKm != null && destDistKm > 0) {
+                // If we have speed and destination, calculate time to destination
+                System.println("avg Speed: " + avgSpeedKm);
+                System.println("to Dest: " + destDistKm);
+                var minToDest = destDistKm / avgSpeedKm * 60;
+                minToDest = minToDest.toNumber();
+                System.println("min to Dest: " + minToDest);
+                url = url + "&todestination=" + destDistKm;
+                url = url + "&timedestination=" + minToDest;
+            }
+            
+            if (estDistKm != null && estDistKm > 0) {
+                System.println("est Dist: " + estDistKm);
+                url = url + "&trip=" + estDistKm;
+            }
+        }
 
         var options = {                                             // set the options
            :method => Communications.HTTP_REQUEST_METHOD_GET,      // set HTTP method
